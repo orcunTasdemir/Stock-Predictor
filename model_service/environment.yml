@@ -1,0 +1,15 @@
+name: model_service_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - fastapi
+  - uvicorn
+  - pandas
+  - numpy
+  - statsmodels
+  - scikit-learn
+  - xgboost
+  - pip
+  - pip:
+      - python-dotenv

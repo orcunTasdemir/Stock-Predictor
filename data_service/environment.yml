@@ -1,0 +1,14 @@
+name: data_service_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - fastapi
+  - uvicorn
+  - pandas
+  - numpy
+  - yfinance
+  - httpx  # optional if you want to call other services internally
+  - pip
+  - pip:
+      - python-dotenv  # for environment variables

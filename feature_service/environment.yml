@@ -1,0 +1,12 @@
+name: feature_service_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - fastapi
+  - uvicorn
+  - pandas
+  - numpy
+  - pip
+  - pip:
+      - python-dotenv

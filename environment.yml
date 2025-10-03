@@ -1,0 +1,16 @@
+name: stock-predictor
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - fastapi
+  - uvicorn
+  - pandas
+  - numpy
+  - scikit-learn
+  - python-dotenv
+  - pip
+  - pip:
+      - yfinance
+      - python-multipart

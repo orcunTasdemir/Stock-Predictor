@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode settings
+.vscode/
+
+# Conda / Python environments
+.env/
+*.env
+*.conda
+environment.yml  # optional if you want to track it, otherwise remove this line
+
+# My Notes
+notes.md
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python logs
+*.log
+
+# Model artifacts
+*.pkl
+*.joblib
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+htmlcov/
+.coverage
+
+# Ignore pycache in any subfolder
+**/__pycache__/
