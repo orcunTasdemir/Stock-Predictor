@@ -8,6 +8,7 @@ dependencies:
   - pandas
   - numpy
   - yfinance
+  - pytest
   - httpx  # optional if you want to call other services internally
   - pip
   - pip:

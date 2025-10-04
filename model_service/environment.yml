@@ -10,6 +10,8 @@ dependencies:
   - statsmodels
   - scikit-learn
   - xgboost
+  - yfinance
+  - pytest
   - pip
   - pip:
       - python-dotenv

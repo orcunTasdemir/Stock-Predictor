@@ -1,89 +1,96 @@
+# model_service/app.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict
 import pandas as pd
-import numpy as np
-from statsmodels.tsa.arima.model import ARIMA
-from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
-import joblib
-import os
 
-
-# Load RF Model
-rf_metadata_path = os.path.join(os.path.dirname(__file__), "rf_model.pkl")
-rf_metadata = joblib.load(rf_metadata_path)
-rf_model = rf_metadata["model"]
-rf_feature_cols = rf_metadata["feature_cols"]
-
+from .model_manager import load_model, _train_and_register, registry_manager, FEATURE_COLS
 
 app = FastAPI(title="Model Service")
 
+# ---------------------------
 # Pydantic model for input
+# ---------------------------
 class FeaturesData(BaseModel):
     ticker: str
     features: List[Dict]  # list of feature dictionaries per date
-    
 
 
-
+# ---------------------------
+# Prediction endpoint
+# ---------------------------
 @app.post("/predict/{model_name}")
 def predict_model(model_name: str, data: FeaturesData):
     """
-    Dynamic model prediction endpoint
+    Dynamic model prediction endpoint for ARIMA, RF, XGB, etc.
     """
     
+    print("Incoming model_name:", model_name)
+    print("Incoming features:", data.features[:2])  # just first 2 rows
+
     try:
+        # Convert incoming features to DataFrame
         df = pd.DataFrame(data.features)
+        print("DataFrame columns:", df.columns.tolist())
         df['Date'] = pd.to_datetime(df['Date'])
         df.sort_values('Date', inplace=True)
-        
-        # Preparing features for the ML models
-        X  = df.drop(columns=['Date', 'Close'], errors='ignore').values
-        
-        ## MODEL SELECTION ##
-        if model_name.lower() == 'arima':
-            # Use Close column as the time series
-            close_series = df['Close']
-            # Minimal ARIMA example order=(1,1,1)
-            model = ARIMA(close_series, order=(1, 1, 1))
-            model_fit = model.fit()
-            # Forecast the next value
-            forecast = model_fit.forecast(steps=1)
+
+        model_name = model_name.lower()
+
+        # ---------------------------
+        # ARIMA model
+        # ---------------------------
+        if model_name == "arima":
+            if "Close" not in df.columns:
+                raise HTTPException(status_code=400, detail="ARIMA requires 'Close' column")
+            # Just load ARIMA from registry (will auto-train if missing or stale)
+            model = load_model("arima", data.ticker)
+            forecast = model.forecast(steps=1)
             next_day_price = forecast.iloc[0]
-            
-        elif model_name.lower() in ['rf', 'randomforest', 'random_forest']:
-            try:
-                # Ensure df has all required columns
-                missing_cols = [col for col in rf_feature_cols if col not in df.columns]
-                if missing_cols:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Missing feature columns for RF: {missing_cols}"
-                    )
 
-                # Extract features in the same order as during training
-                X = df[rf_feature_cols].values
-
-                # Use last row for prediction
-                next_day_price = float(rf_model.predict([X[-1]]))
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=f"RF prediction error: {e}")
-                
-        elif model_name.lower() in ['xgboost', 'xgb']:
-            n_features = X.shape[1]
-            if n_features == 0:
-                next_day_price = float(df['Close'].iloc[-1])  # fallback to last close price
-            else:
-                xgb_model = XGBRegressor()
-                xgb_model.fit(np.arange(10*n_features).reshape(10, n_features), np.arange(10))
-                next_day_price = float(xgb_model.predict([X[-1]]))        
-                   
+        # ---------------------------
+        # ML models: RF, XGB, etc.
+        # ---------------------------
         else:
-            raise HTTPException(status_code=400, detail=f"Model '{model_name}' not supported")
-        
-        return {"ticker": data.ticker, 
-                "model": model_name.lower(),
-                "prediction": round(float(next_day_price), 2)}
+            missing_cols = [col for col in FEATURE_COLS if col not in df.columns]
+            if missing_cols:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Missing feature columns for {model_name}: {missing_cols}"
+                )
+
+            X = df[FEATURE_COLS].values
+            model = load_model(model_name, data.ticker)
+            next_day_price = float(model.predict([X[-1]])[0])
+
+        return {
+            "ticker": data.ticker,
+            "model": model_name,
+            "prediction": round(float(next_day_price), 2)
+        }
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ---------------------------
+# Manual train/retrain endpoint
+# ---------------------------
+@app.post("/train/{model_name}/{ticker}")
+def train_model(model_name: str, ticker: str):
+    """
+    Manually train or retrain a model for a given ticker.
+    """
+    try:
+        model = _train_and_register(model_name.lower(), ticker)
+        info = registry_manager.get_model_info(ticker, model_name.lower())
+        return {
+            "ticker": ticker,
+            "model": model_name.lower(),
+            "status": "trained",
+            "trained_at": info["last_trained_at"]
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Training failed: {e}")
