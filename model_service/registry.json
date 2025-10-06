@@ -1,15 +1,19 @@
 {
-  "AAPL": {
-    "rf": {
-      "model_path": "/home/ot/Work/stock-predictor-backend/model_service/models/rf_AAPL.pkl",
-      "last_trained_at": "2025-10-04T08:31:20Z",
+  "global": {
+    "xgb": {
+      "model_path": "/home/ot/Work/stock-predictor-backend/model_service/models/xgb_global.pkl",
+      "last_trained_at": "2025-10-06T06:00:43Z",
       "feature_cols": [
         "SMA_3",
         "EMA_3",
         "Returns",
         "RSI_14",
         "Volume"
-      ]
+      ],
+      "tickers_included": {
+        "AAPL": null,
+        "MSFT": null
+      }
     }
   }
 }

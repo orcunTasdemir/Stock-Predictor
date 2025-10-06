@@ -1,0 +1,10 @@
+[
+  {
+    "ticker": "AAPL",
+    "features": [{"Date":"2025-01-01","Close":101,"SMA_3":101,"EMA_3":101,"Returns":0,"RSI_14":0,"Volume":10000}]
+  },
+  {
+    "ticker": "MSFT",
+    "features": [{"Date":"2025-01-01","Close":201,"SMA_3":201,"EMA_3":201,"Returns":0,"RSI_14":0,"Volume":15000}]
+  }
+]

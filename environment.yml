@@ -10,6 +10,7 @@ dependencies:
   - numpy
   - scikit-learn
   - python-dotenv
+  - matplotlib
   - pytest
   - pip
   - pip:

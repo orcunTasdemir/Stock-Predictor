@@ -31,7 +31,7 @@ def is_stale(ts: str, days: int) -> bool:
 # Stock Data Fetching
 # -----------------------
 def fetch_stock_data(ticker: str, period="1y") -> pd.DataFrame:
-    df = yf.download(ticker, period=period, interval="1d")
+    df = yf.download(ticker, period=period, interval="1d", auto_adjust=True)
     df["Returns"] = df["Close"].pct_change()
     df["SMA_3"] = df["Close"].rolling(window=3).mean()
     df["EMA_3"] = df["Close"].ewm(span=3, adjust=False).mean()
